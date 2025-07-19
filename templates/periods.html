@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Periods - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i data-feather="clock"></i> Class Periods
+        </h1>
+        <a href="{{ url_for('new_period') }}" class="btn btn-primary">
+            <i data-feather="plus"></i> Create New Period
+        </a>
+    </div>
+
+    {% if periods %}
+        <div class="row">
+            {% for period in periods %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">{{ period.name }}</h6>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                    <i data-feather="more-horizontal"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('edit_period', period_id=period.id) }}">
+                                            <i data-feather="edit-2"></i> Edit
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('take_attendance', period_id=period.id) }}">
+                                            <i data-feather="camera"></i> Take Attendance
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('delete_period', period_id=period.id) }}" class="d-inline">
+                                            <button type="submit" class="dropdown-item text-danger" 
+                                                    onclick="return confirm('Are you sure you want to delete this period?')">
+                                                <i data-feather="trash-2"></i> Delete
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">{{ period.subject }}</h6>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i data-feather="clock" class="me-2 text-primary" style="width: 16px; height: 16px;"></i>
+                                    <span>{{ period.start_time.strftime('%H:%M') }} - {{ period.end_time.strftime('%H:%M') }}</span>
+                                </div>
+                                
+                                <div class="d-flex align-items-center">
+                                    <i data-feather="users" class="me-2 text-info" style="width: 16px; height: 16px;"></i>
+                                    <span>Class {{ period.class_name }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">
+                                    Created: {{ period.created_at.strftime('%b %d, %Y') }}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-grid gap-2 d-md-flex">
+                                <a href="{{ url_for('take_attendance', period_id=period.id) }}" class="btn btn-primary btn-sm flex-fill">
+                                    <i data-feather="camera"></i> Attendance
+                                </a>
+                                <a href="{{ url_for('edit_period', period_id=period.id) }}" class="btn btn-outline-secondary btn-sm">
+                                    <i data-feather="edit-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="card">
+                <div class="card-body py-5">
+                    <i data-feather="clock" class="text-muted mb-4" style="width: 64px; height: 64px;"></i>
+                    <h4 class="text-muted mb-3">No periods created yet</h4>
+                    <p class="text-muted mb-4">
+                        Create your first class period to start taking attendance.
+                    </p>
+                    <a href="{{ url_for('new_period') }}" class="btn btn-primary">
+                        <i data-feather="plus"></i> Create Your First Period
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

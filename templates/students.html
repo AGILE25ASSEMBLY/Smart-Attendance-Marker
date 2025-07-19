@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Students - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i data-feather="users"></i> Students
+        </h1>
+        <a href="{{ url_for('new_student') }}" class="btn btn-primary">
+            <i data-feather="user-plus"></i> Enroll New Student
+        </a>
+    </div>
+
+    {% if students %}
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">Enrolled Students ({{ students|length }})</h5>
+                    </div>
+                    <div class="col-auto">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search students...">
+                            <span class="input-group-text">
+                                <i data-feather="search"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="studentsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Roll Number</th>
+                                <th>Class</th>
+                                <th>Email</th>
+                                <th>Face Data</th>
+                                <th>Enrolled</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar me-3">
+                                                {% if student.image_path %}
+                                                    <img src="{{ url_for('static', filename='uploads/' + student.image_path.split('/')[-1]) }}" 
+                                                         alt="{{ student.name }}" class="rounded-circle" 
+                                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                                {% else %}
+                                                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" 
+                                                         style="width: 40px; height: 40px;">
+                                                        <i data-feather="user" style="width: 20px; height: 20px;"></i>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ student.name }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ student.roll_number }}</span>
+                                    </td>
+                                    <td>{{ student.class_name }}</td>
+                                    <td>
+                                        {% if student.email %}
+                                            <a href="mailto:{{ student.email }}" class="text-decoration-none">
+                                                {{ student.email }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">Not provided</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if student.face_encoding %}
+                                            <span class="badge bg-success">
+                                                <i data-feather="check-circle" style="width: 14px; height: 14px;"></i>
+                                                Enrolled
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                <i data-feather="alert-circle" style="width: 14px; height: 14px;"></i>
+                                                No Face Data
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ student.created_at.strftime('%b %d, %Y') }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-primary" 
+                                                    data-bs-toggle="modal" data-bs-target="#studentModal{{ student.id }}">
+                                                <i data-feather="eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary">
+                                                <i data-feather="edit-2"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Student Details Modal -->
+                                <div class="modal fade" id="studentModal{{ student.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">
+                                                    <i data-feather="user"></i> {{ student.name }}
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row">
+                                                    <div class="col-md-4 text-center">
+                                                        {% if student.image_path %}
+                                                            <img src="{{ url_for('static', filename='uploads/' + student.image_path.split('/')[-1]) }}" 
+                                                                 alt="{{ student.name }}" class="img-fluid rounded">
+                                                        {% else %}
+                                                            <div class="bg-secondary rounded d-flex align-items-center justify-content-center" 
+                                                                 style="height: 150px;">
+                                                                <i data-feather="user" style="width: 48px; height: 48px;"></i>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <table class="table table-sm">
+                                                            <tr>
+                                                                <th>Name:</th>
+                                                                <td>{{ student.name }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>Roll Number:</th>
+                                                                <td>{{ student.roll_number }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>Class:</th>
+                                                                <td>{{ student.class_name }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>Email:</th>
+                                                                <td>{{ student.email or 'Not provided' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>Face Recognition:</th>
+                                                                <td>
+                                                                    {% if student.face_encoding %}
+                                                                        <span class="text-success">✓ Enrolled</span>
+                                                                    {% else %}
+                                                                        <span class="text-warning">⚠ No data</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>Enrolled:</th>
+                                                                <td>{{ student.created_at.strftime('%B %d, %Y at %H:%M') }}</td>
+                                                            </tr>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="card">
+                <div class="card-body py-5">
+                    <i data-feather="users" class="text-muted mb-4" style="width: 64px; height: 64px;"></i>
+                    <h4 class="text-muted mb-3">No students enrolled yet</h4>
+                    <p class="text-muted mb-4">
+                        Start by enrolling your first student with face recognition data.
+                    </p>
+                    <a href="{{ url_for('new_student') }}" class="btn btn-primary">
+                        <i data-feather="user-plus"></i> Enroll Your First Student
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        const searchTerm = this.value.toLowerCase();
+        const tableRows = document.querySelectorAll('#studentsTable tbody tr');
+        
+        tableRows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

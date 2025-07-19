@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: face-recognition-attendance
+    env: python
+    buildCommand: pip install uv && uv sync
+    startCommand: uv run gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 main:app
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.0
+    disk:
+      name: uploads
+      mountPath: /opt/render/project/src/uploads
+      sizeGB: 1
+
+databases:
+  - name: face-recognition-db
+    databaseName: attendance_system
+    user: attendance_user

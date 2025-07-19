@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Webcam Face Recognition - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i data-feather="camera"></i> Real-time Face Recognition Attendance</h4>
+                    <small class="text-muted">Period: {{ period.name }} - {{ period.class_name }}</small>
+                </div>
+                <div class="card-body">
+                    <!-- Camera Controls -->
+                    <div class="text-center mb-4">
+                        <button id="startCamera" class="btn btn-primary me-2">
+                            <i data-feather="camera"></i> Start Camera
+                        </button>
+                        <button id="stopCamera" class="btn btn-secondary me-2" disabled>
+                            <i data-feather="camera-off"></i> Stop Camera
+                        </button>
+                        <button id="capturePhoto" class="btn btn-success" disabled>
+                            <i data-feather="aperture"></i> Capture & Recognize
+                        </button>
+                    </div>
+
+                    <!-- Camera Feed -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="text-center">
+                                <video id="videoElement" width="640" height="480" style="border: 2px solid #dee2e6; border-radius: 8px; display: none;"></video>
+                                <canvas id="captureCanvas" width="640" height="480" style="display: none;"></canvas>
+                                <div id="cameraPlaceholder" class="bg-dark d-flex align-items-center justify-content-center" style="width: 640px; height: 480px; border: 2px dashed #6c757d; border-radius: 8px; margin: 0 auto;">
+                                    <div class="text-center text-muted">
+                                        <i data-feather="camera" style="width: 64px; height: 64px; opacity: 0.5;"></i>
+                                        <p class="mt-2">Click "Start Camera" to begin</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <!-- Recognition Results -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6><i data-feather="user-check"></i> Recognition Results</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recognitionResults">
+                                        <p class="text-muted text-center">No captures yet</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Live Statistics -->
+                            <div class="card mt-3">
+                                <div class="card-header">
+                                    <h6><i data-feather="bar-chart-2"></i> Today's Attendance</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Present:</span>
+                                        <span class="badge bg-success" id="presentCount">{{ present_count }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-2">
+                                        <span>Total Students:</span>
+                                        <span class="badge bg-secondary">{{ total_students }}</span>
+                                    </div>
+                                    <div class="progress mt-2">
+                                        <div class="progress-bar bg-success" style="width: {{ (present_count / total_students * 100) if total_students > 0 else 0 }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="alert alert-info mt-4">
+                        <h6><i data-feather="info"></i> Instructions:</h6>
+                        <ol class="mb-0">
+                            <li>Click "Start Camera" to activate your webcam</li>
+                            <li>Position students in front of the camera one at a time</li>
+                            <li>Click "Capture & Recognize" when a student's face is clearly visible</li>
+                            <li>The system will automatically mark attendance if the face is recognized</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let videoElement = document.getElementById('videoElement');
+let captureCanvas = document.getElementById('captureCanvas');
+let context = captureCanvas.getContext('2d');
+let stream = null;
+let isCapturing = false;
+
+// Camera controls
+document.getElementById('startCamera').addEventListener('click', startCamera);
+document.getElementById('stopCamera').addEventListener('click', stopCamera);
+document.getElementById('capturePhoto').addEventListener('click', captureAndRecognize);
+
+async function startCamera() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                width: 640, 
+                height: 480,
+                facingMode: 'user'
+            } 
+        });
+        
+        videoElement.srcObject = stream;
+        videoElement.style.display = 'block';
+        document.getElementById('cameraPlaceholder').style.display = 'none';
+        
+        videoElement.play();
+        
+        // Update button states
+        document.getElementById('startCamera').disabled = true;
+        document.getElementById('stopCamera').disabled = false;
+        document.getElementById('capturePhoto').disabled = false;
+        
+        showAlert('Camera started successfully', 'success');
+        
+    } catch (error) {
+        console.error('Error accessing camera:', error);
+        showAlert('Error accessing camera. Please ensure camera permissions are granted.', 'error');
+    }
+}
+
+function stopCamera() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    
+    videoElement.style.display = 'none';
+    document.getElementById('cameraPlaceholder').style.display = 'flex';
+    
+    // Update button states
+    document.getElementById('startCamera').disabled = false;
+    document.getElementById('stopCamera').disabled = true;
+    document.getElementById('capturePhoto').disabled = true;
+    
+    showAlert('Camera stopped', 'info');
+}
+
+async function captureAndRecognize() {
+    if (isCapturing) return;
+    
+    isCapturing = true;
+    document.getElementById('capturePhoto').disabled = true;
+    document.getElementById('capturePhoto').innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+    
+    try {
+        // Capture frame from video
+        context.drawImage(videoElement, 0, 0, 640, 480);
+        const imageDataUrl = captureCanvas.toDataURL('image/jpeg', 0.8);
+        
+        // Send to server for recognition
+        const response = await fetch(`/attendance/{{ period.id }}/face_recognition`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `image_data=${encodeURIComponent(imageDataUrl)}`
+        });
+        
+        const result = await response.json();
+        
+        // Display results
+        displayRecognitionResult(result);
+        
+        // Update statistics if attendance was marked
+        if (result.success && result.student_name) {
+            updateAttendanceStats();
+        }
+        
+    } catch (error) {
+        console.error('Recognition error:', error);
+        showAlert('Face recognition failed. Please try again.', 'error');
+    } finally {
+        isCapturing = false;
+        document.getElementById('capturePhoto').disabled = false;
+        document.getElementById('capturePhoto').innerHTML = '<i data-feather="aperture"></i> Capture & Recognize';
+        feather.replace();
+    }
+}
+
+function displayRecognitionResult(result) {
+    const resultsDiv = document.getElementById('recognitionResults');
+    const timestamp = new Date().toLocaleTimeString();
+    
+    let resultHtml = `<div class="border-bottom pb-2 mb-2">
+        <small class="text-muted">${timestamp}</small><br>`;
+    
+    if (result.success && result.marked_students && result.marked_students.length > 0) {
+        // Multi-face recognition results
+        result.marked_students.forEach(student => {
+            resultHtml += `
+                <span class="badge bg-success mb-1">✓ ${student.name}</span><br>
+                <small>Confidence: ${(student.confidence * 100).toFixed(1)}%</small><br>
+            `;
+        });
+        
+        if (result.failed_recognitions && result.failed_recognitions.length > 0) {
+            resultHtml += `<small class="text-warning">
+                ${result.failed_recognitions.length} faces not recognized
+            </small><br>`;
+        }
+        
+        resultHtml += `<small class="text-info">
+            Total faces detected: ${result.total_faces_detected || 0}
+        </small>`;
+        
+        showAlert(result.message, 'success');
+    } else if (result.success && result.student_name) {
+        // Single face recognition
+        resultHtml += `
+            <span class="badge bg-success mb-1">✓ Recognized</span><br>
+            <strong>${result.student_name}</strong><br>
+            <small>Confidence: ${(result.confidence * 100).toFixed(1)}%</small>
+        `;
+        showAlert(`Attendance marked for ${result.student_name}`, 'success');
+    } else {
+        resultHtml += `
+            <span class="badge bg-warning mb-1">Not Recognized</span><br>
+            <small>${result.message || result.error}</small>
+        `;
+        showAlert(result.message || result.error, 'warning');
+    }
+    
+    resultHtml += '</div>';
+    
+    // Prepend to results (newest first)
+    resultsDiv.innerHTML = resultHtml + resultsDiv.innerHTML;
+    
+    // Limit to last 10 results
+    const results = resultsDiv.children;
+    while (results.length > 10) {
+        resultsDiv.removeChild(results[results.length - 1]);
+    }
+}
+
+function updateAttendanceStats() {
+    // Refresh the attendance count
+    fetch(`/attendance/{{ period.id }}/stats`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('presentCount').textContent = data.present || 0;
+            
+            // Update progress bar
+            const total = {{ total_students }};
+            const present = data.present || 0;
+            const percentage = total > 0 ? (present / total * 100) : 0;
+            
+            const progressBar = document.querySelector('.progress-bar');
+            progressBar.style.width = `${percentage}%`;
+        })
+        .catch(error => console.error('Error updating stats:', error));
+}
+
+function showAlert(message, type) {
+    // Create alert element
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.classList.remove('show');
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 150);
+        }
+    }, 5000);
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+});
+</script>
+{% endblock %}

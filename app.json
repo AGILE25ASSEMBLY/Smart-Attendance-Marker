@@ -1,0 +1,34 @@
+{
+  "name": "Face Recognition Attendance System",
+  "description": "A Flask-based face recognition attendance system for educational institutions",
+  "repository": "https://github.com/yourusername/face-recognition-attendance",
+  "logo": "https://cdn.jsdelivr.net/npm/feather-icons@4.29.0/icons/camera.svg",
+  "keywords": ["flask", "face-recognition", "attendance", "opencv", "mediapipe"],
+  "image": "heroku/python",
+  "stack": "heroku-22",
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:essential-0"
+    }
+  ],
+  "env": {
+    "SESSION_SECRET": {
+      "description": "Secret key for session management",
+      "generator": "secret"
+    },
+    "FLASK_ENV": {
+      "value": "production"
+    }
+  }
+}

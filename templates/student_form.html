@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if student else 'Enroll' }} Student - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i data-feather="user-plus"></i>
+                        {{ 'Edit Student' if student else 'Enroll New Student' }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           value="{{ student.name if student else '' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="roll_number" class="form-label">Roll Number *</label>
+                                    <input type="text" class="form-control" id="roll_number" name="roll_number" 
+                                           value="{{ student.roll_number if student else '' }}" required>
+                                    <div class="form-text">Must be unique across all students</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="class_name" class="form-label">Class/Grade *</label>
+                                    {% if class_names %}
+                                        <select class="form-select" id="class_name" name="class_name" required>
+                                            <option value="">Select a class</option>
+                                            {% for class_name in class_names %}
+                                                <option value="{{ class_name }}" 
+                                                        {{ 'selected' if student and student.class_name == class_name else '' }}>
+                                                    {{ class_name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text">Select from your taught classes</div>
+                                    {% else %}
+                                        <input type="text" class="form-control" id="class_name" name="class_name" 
+                                               value="{{ student.class_name if student else '' }}" required>
+                                        <div class="form-text">Create a period first to see class options</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{{ student.email if student else '' }}">
+                                    <div class="form-text">Optional - for communication</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Face Recognition Section -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i data-feather="camera"></i> Face Recognition Setup
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="image" class="form-label">Student Photo</label>
+                                            <input type="file" class="form-control" id="image" name="image" 
+                                                   accept="image/*" {{ 'required' if not student else '' }}>
+                                            <div class="form-text">
+                                                Upload a clear front-facing photo for face recognition training.
+                                                Supported formats: JPG, PNG, GIF (max 16MB)
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Image Preview -->
+                                        <div id="imagePreview" class="text-center" style="display: none;">
+                                            <img id="previewImg" src="#" alt="Preview" class="img-fluid rounded" style="max-height: 200px;">
+                                            <p class="mt-2 text-muted">Image preview</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="alert alert-info">
+                                            <h6><i data-feather="info"></i> Photo Guidelines</h6>
+                                            <ul class="mb-0 small">
+                                                <li>Use good lighting conditions</li>
+                                                <li>Face should be clearly visible</li>
+                                                <li>Look directly at the camera</li>
+                                                <li>Remove sunglasses or hats</li>
+                                                <li>Avoid blurry images</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        {% if student and student.image_path %}
+                                            <div class="text-center">
+                                                <p class="mb-2"><strong>Current Photo:</strong></p>
+                                                <img src="{{ url_for('static', filename='uploads/' + student.image_path.split('/')[-1]) }}" 
+                                                     alt="{{ student.name }}" class="img-fluid rounded" style="max-height: 150px;">
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('students') }}" class="btn btn-secondary">
+                                <i data-feather="arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-feather="save"></i>
+                                {{ 'Update Student' if student else 'Enroll Student' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i data-feather="help-circle"></i> Face Recognition Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">
+                        Our face recognition system uses advanced algorithms to identify students automatically during attendance.
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Benefits:</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-1">
+                                    <i data-feather="check" class="text-success me-2" style="width: 16px; height: 16px;"></i>
+                                    Faster attendance taking
+                                </li>
+                                <li class="mb-1">
+                                    <i data-feather="check" class="text-success me-2" style="width: 16px; height: 16px;"></i>
+                                    Reduced human error
+                                </li>
+                                <li class="mb-1">
+                                    <i data-feather="check" class="text-success me-2" style="width: 16px; height: 16px;"></i>
+                                    Automated attendance records
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Privacy & Security:</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-1">
+                                    <i data-feather="shield" class="text-primary me-2" style="width: 16px; height: 16px;"></i>
+                                    Data encrypted and secure
+                                </li>
+                                <li class="mb-1">
+                                    <i data-feather="shield" class="text-primary me-2" style="width: 16px; height: 16px;"></i>
+                                    Used only for attendance
+                                </li>
+                                <li class="mb-1">
+                                    <i data-feather="shield" class="text-primary me-2" style="width: 16px; height: 16px;"></i>
+                                    GDPR compliant
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Image preview functionality
+    document.getElementById('image').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImg').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Validate file size
+    document.getElementById('image').addEventListener('change', function() {
+        const maxSize = 16 * 1024 * 1024; // 16MB
+        if (this.files[0] && this.files[0].size > maxSize) {
+            alert('File size must be less than 16MB');
+            this.value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

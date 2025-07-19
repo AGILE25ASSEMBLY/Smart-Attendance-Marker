@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">
+        <i data-feather="check-circle"></i> Take Attendance
+    </h1>
+
+    {% if periods %}
+        <div class="row">
+            {% for period in periods %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="mb-0">{{ period.name }}</h6>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">{{ period.subject }}</h6>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i data-feather="clock" class="me-2 text-primary" style="width: 16px; height: 16px;"></i>
+                                    <span>{{ period.start_time.strftime('%H:%M') }} - {{ period.end_time.strftime('%H:%M') }}</span>
+                                </div>
+                                
+                                <div class="d-flex align-items-center mb-2">
+                                    <i data-feather="users" class="me-2 text-info" style="width: 16px; height: 16px;"></i>
+                                    <span>Class {{ period.class_name }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Time Status -->
+                            {% set current_time = moment().time() %}
+                            {% set is_active = current_time >= period.start_time and current_time <= period.end_time %}
+                            
+                            <div class="mb-3">
+                                {% if is_active %}
+                                    <span class="badge bg-success">
+                                        <i data-feather="play-circle" style="width: 14px; height: 14px;"></i>
+                                        Active Now
+                                    </span>
+                                {% elif current_time < period.start_time %}
+                                    <span class="badge bg-warning">
+                                        <i data-feather="clock" style="width: 14px; height: 14px;"></i>
+                                        Upcoming
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i data-feather="pause-circle" style="width: 14px; height: 14px;"></i>
+                                        Ended
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-grid">
+                                <a href="{{ url_for('take_attendance', period_id=period.id) }}" 
+                                   class="btn {{ 'btn-primary' if is_active else 'btn-outline-primary' }}">
+                                    <i data-feather="camera"></i> Take Attendance
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="card">
+                <div class="card-body py-5">
+                    <i data-feather="clock" class="text-muted mb-4" style="width: 64px; height: 64px;"></i>
+                    <h4 class="text-muted mb-3">No periods created yet</h4>
+                    <p class="text-muted mb-4">
+                        Create class periods first before taking attendance.
+                    </p>
+                    <a href="{{ url_for('new_period') }}" class="btn btn-primary">
+                        <i data-feather="plus"></i> Create Your First Period
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Quick Instructions -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i data-feather="help-circle"></i> How to Take Attendance
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Face Recognition Method:</h6>
+                    <ol class="list-unstyled">
+                        <li class="mb-2">
+                            <span class="badge bg-primary me-2">1</span>
+                            Select a period from above
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-primary me-2">2</span>
+                            Click "Start Face Recognition"
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-primary me-2">3</span>
+                            Students look at the camera
+                        </li>
+                        <li>
+                            <span class="badge bg-primary me-2">4</span>
+                            System automatically marks attendance
+                        </li>
+                    </ol>
+                </div>
+                <div class="col-md-6">
+                    <h6>Manual Method:</h6>
+                    <ol class="list-unstyled">
+                        <li class="mb-2">
+                            <span class="badge bg-secondary me-2">1</span>
+                            Select a period from above
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-secondary me-2">2</span>
+                            View the student list
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-secondary me-2">3</span>
+                            Mark students present/absent manually
+                        </li>
+                        <li>
+                            <span class="badge bg-secondary me-2">4</span>
+                            Save attendance record
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

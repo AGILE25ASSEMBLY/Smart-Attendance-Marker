@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="hero-section bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Smart Attendance System
+                </h1>
+                <p class="lead mb-4">
+                    Streamline your classroom attendance with advanced face recognition technology. 
+                    Manage students, track attendance, and generate comprehensive reports - all in one place.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="/auth/replit_auth" class="btn btn-light btn-lg">
+                        <i data-feather="log-in"></i> Teacher Login
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="feature-icon-container">
+                    <i data-feather="camera" style="width: 200px; height: 200px; opacity: 0.1;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto text-center mb-5">
+            <h2 class="display-6 mb-4">Key Features</h2>
+            <p class="lead text-muted">
+                Everything you need to manage attendance efficiently in educational institutions.
+            </p>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <i data-feather="user-check" class="text-success mb-3" style="width: 48px; height: 48px;"></i>
+                    <h5 class="card-title">Face Recognition</h5>
+                    <p class="card-text text-muted">
+                        Automated attendance marking using advanced face recognition technology.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <i data-feather="clock" class="text-info mb-3" style="width: 48px; height: 48px;"></i>
+                    <h5 class="card-title">Period Management</h5>
+                    <p class="card-text text-muted">
+                        Create and manage class periods with flexible time slots and subjects.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <i data-feather="users" class="text-warning mb-3" style="width: 48px; height: 48px;"></i>
+                    <h5 class="card-title">Student Enrollment</h5>
+                    <p class="card-text text-muted">
+                        Easy student registration with photo capture for face recognition training.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <i data-feather="bar-chart-2" class="text-primary mb-3" style="width: 48px; height: 48px;"></i>
+                    <h5 class="card-title">Analytics & Reports</h5>
+                    <p class="card-text text-muted">
+                        Comprehensive attendance reports with export functionality for analysis.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h3 class="display-6 mb-4">How It Works</h3>
+                <div class="process-steps">
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <span class="badge bg-primary rounded-pill fs-6 me-3">1</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Teacher Login & Setup</h6>
+                            <p class="text-muted mb-0">Teachers log in and create class periods with time slots.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <span class="badge bg-primary rounded-pill fs-6 me-3">2</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Student Enrollment</h6>
+                            <p class="text-muted mb-0">Register students with photos for face recognition training.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <span class="badge bg-primary rounded-pill fs-6 me-3">3</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Automated Attendance</h6>
+                            <p class="text-muted mb-0">Take attendance using face recognition or manual marking.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <span class="badge bg-primary rounded-pill fs-6 me-3">4</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Reports & Analytics</h6>
+                            <p class="text-muted mb-0">Generate detailed reports and export data for analysis.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="mt-4 mt-lg-0">
+                    <a href="/auth/replit_auth" class="btn btn-primary btn-lg">
+                        <i data-feather="arrow-right"></i> Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

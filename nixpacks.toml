@@ -1,0 +1,8 @@
+[phases.build]
+cmds = ['pip install uv', 'uv sync --frozen']
+
+[phases.install]
+aptPkgs = ['libgl1-mesa-glx', 'libglib2.0-0', 'libsm6', 'libxext6', 'libxrender-dev', 'libgomp1']
+
+[start]
+cmd = 'uv run gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 main:app'

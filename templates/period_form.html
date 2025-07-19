@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if period else 'Create' }} Period - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i data-feather="clock"></i>
+                        {{ 'Edit Period' if period else 'Create New Period' }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Period Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ period.name if period else '' }}" required>
+                            <div class="form-text">e.g., "Period 1", "Morning Session", etc.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject *</label>
+                            <input type="text" class="form-control" id="subject" name="subject" 
+                                   value="{{ period.subject if period else '' }}" required>
+                            <div class="form-text">Subject being taught in this period</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="start_time" class="form-label">Start Time *</label>
+                                    <input type="time" class="form-control" id="start_time" name="start_time" 
+                                           value="{{ period.start_time.strftime('%H:%M') if period else '' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="end_time" class="form-label">End Time *</label>
+                                    <input type="time" class="form-control" id="end_time" name="end_time" 
+                                           value="{{ period.end_time.strftime('%H:%M') if period else '' }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="class_name" class="form-label">Class/Grade *</label>
+                            <input type="text" class="form-control" id="class_name" name="class_name" 
+                                   value="{{ period.class_name if period else '' }}" required>
+                            <div class="form-text">e.g., "10A", "Grade 5", "CS101", etc.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('periods') }}" class="btn btn-secondary">
+                                <i data-feather="arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-feather="save"></i>
+                                {{ 'Update Period' if period else 'Create Period' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i data-feather="info"></i> Tips for Creating Periods
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i data-feather="check" class="text-success me-2" style="width: 16px; height: 16px;"></i>
+                            Use descriptive names that are easy to identify
+                        </li>
+                        <li class="mb-2">
+                            <i data-feather="check" class="text-success me-2" style="width: 16px; height: 16px;"></i>
+                            Ensure time slots don't overlap with other periods
+                        </li>
+                        <li class="mb-2">
+                            <i data-feather="check" class="text-success me-2" style="width: 16px; height: 16px;"></i>
+                            Class names should match those used for student enrollment
+                        </li>
+                        <li>
+                            <i data-feather="check" class="text-success me-2" style="width: 16px; height: 16px;"></i>
+                            Consider adding buffer time between periods
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Validate time inputs
+    document.getElementById('end_time').addEventListener('change', function() {
+        const startTime = document.getElementById('start_time').value;
+        const endTime = this.value;
+        
+        if (startTime && endTime && startTime >= endTime) {
+            alert('End time must be after start time.');
+            this.value = '';
+        }
+    });
+</script>
+{% endblock %}

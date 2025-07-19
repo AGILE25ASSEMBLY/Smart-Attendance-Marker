@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i data-feather="bar-chart-2"></i> Attendance Reports
+        </h1>
+    </div>
+
+    {% if periods %}
+        <div class="row">
+            {% for period in periods %}
+                {% set period_data = report_data.get(period.id, {}) %}
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">{{ period.name }} - {{ period.subject }}</h6>
+                                <small class="text-muted">Class {{ period.class_name }}</small>
+                            </div>
+                            <a href="{{ url_for('export_attendance', period_id=period.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i data-feather="download"></i> Export CSV
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <!-- Summary Stats -->
+                            <div class="row mb-3">
+                                <div class="col-4 text-center">
+                                    <h5 class="mb-0 text-primary">{{ period_data.get('total_students', 0) }}</h5>
+                                    <small class="text-muted">Students</small>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <h5 class="mb-0 text-info">{{ period_data.get('total_classes', 0) }}</h5>
+                                    <small class="text-muted">Classes Held</small>
+                                </div>
+                                <div class="col-4 text-center">
+                                    {% set attendance_records = period_data.get('attendance_records', []) %}
+                                    {% set avg_attendance = (attendance_records | selectattr('status', 'equalto', 'present') | list | length / attendance_records | length * 100) if attendance_records | length > 0 else 0 %}
+                                    <h5 class="mb-0 text-success">{{ "%.1f"|format(avg_attendance) }}%</h5>
+                                    <small class="text-muted">Avg. Attendance</small>
+                                </div>
+                            </div>
+
+                            <!-- Time Range -->
+                            <div class="d-flex align-items-center mb-3">
+                                <i data-feather="clock" class="me-2 text-muted" style="width: 16px; height: 16px;"></i>
+                                <span class="text-muted">{{ period.start_time.strftime('%H:%M') }} - {{ period.end_time.strftime('%H:%M') }}</span>
+                            </div>
+
+                            <!-- Recent Attendance -->
+                            {% if attendance_records %}
+                                <h6 class="mb-3">Recent Attendance:</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Present</th>
+                                                <th>Absent</th>
+                                                <th>Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% set dates_attendance = attendance_records | groupby('date') %}
+                                            {% for date, records in dates_attendance | reverse | list[:5] %}
+                                                {% set present_count = records | selectattr('status', 'equalto', 'present') | list | length %}
+                                                {% set total_count = records | length %}
+                                                {% set rate = (present_count / total_count * 100) if total_count > 0 else 0 %}
+                                                <tr>
+                                                    <td>{{ date.strftime('%b %d') }}</td>
+                                                    <td><span class="badge bg-success">{{ present_count }}</span></td>
+                                                    <td><span class="badge bg-warning">{{ total_count - present_count }}</span></td>
+                                                    <td>
+                                                        <span class="badge {{ 'bg-success' if rate >= 80 else 'bg-warning' if rate >= 60 else 'bg-danger' }}">
+                                                            {{ "%.0f"|format(rate) }}%
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-3">
+                                    <i data-feather="calendar" class="text-muted mb-2" style="width: 32px; height: 32px;"></i>
+                                    <p class="text-muted mb-0">No attendance records yet</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    Last updated: {{ period.updated_at.strftime('%b %d, %Y') }}
+                                </small>
+                                <a href="{{ url_for('take_attendance', period_id=period.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i data-feather="camera"></i> Take Attendance
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Overall Statistics -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i data-feather="trending-up"></i> Overall Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <h4 class="text-primary mb-1">{{ periods | length }}</h4>
+                        <p class="text-muted mb-0">Total Periods</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        {% set total_students = report_data.values() | map(attribute='total_students') | sum %}
+                        <h4 class="text-info mb-1">{{ total_students }}</h4>
+                        <p class="text-muted mb-0">Total Students</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        {% set total_classes = report_data.values() | map(attribute='total_classes') | sum %}
+                        <h4 class="text-success mb-1">{{ total_classes }}</h4>
+                        <p class="text-muted mb-0">Classes Held</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        {% set all_records = report_data.values() | map(attribute='attendance_records') | list %}
+                        {% set total_records = all_records | sum(start=[]) | length %}
+                        {% set present_records = all_records | sum(start=[]) | selectattr('status', 'equalto', 'present') | list | length %}
+                        {% set overall_rate = (present_records / total_records * 100) if total_records > 0 else 0 %}
+                        <h4 class="text-warning mb-1">{{ "%.1f"|format(overall_rate) }}%</h4>
+                        <p class="text-muted mb-0">Overall Attendance</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Trends -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i data-feather="activity"></i> Attendance Methods Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                {% set all_records = report_data.values() | map(attribute='attendance_records') | sum(start=[]) %}
+                {% set manual_count = all_records | selectattr('marked_by_method', 'equalto', 'manual') | list | length %}
+                {% set auto_count = all_records | selectattr('marked_by_method', 'equalto', 'face_recognition') | list | length %}
+                {% set total_method_records = manual_count + auto_count %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <i data-feather="user" class="me-3 text-secondary"></i>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <span>Manual Marking</span>
+                                    <span class="fw-bold">{{ manual_count }}</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    {% set manual_percent = (manual_count / total_method_records * 100) if total_method_records > 0 else 0 %}
+                                    <div class="progress-bar bg-secondary" style="width: {{ manual_percent }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <i data-feather="camera" class="me-3 text-primary"></i>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <span>Face Recognition</span>
+                                    <span class="fw-bold">{{ auto_count }}</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    {% set auto_percent = (auto_count / total_method_records * 100) if total_method_records > 0 else 0 %}
+                                    <div class="progress-bar bg-primary" style="width: {{ auto_percent }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if total_method_records == 0 %}
+                    <div class="text-center py-3">
+                        <i data-feather="bar-chart-2" class="text-muted mb-2" style="width: 32px; height: 32px;"></i>
+                        <p class="text-muted mb-0">No attendance data available yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    {% else %}
+        <div class="text-center py-5">
+            <div class="card">
+                <div class="card-body py-5">
+                    <i data-feather="bar-chart-2" class="text-muted mb-4" style="width: 64px; height: 64px;"></i>
+                    <h4 class="text-muted mb-3">No reports available</h4>
+                    <p class="text-muted mb-4">
+                        Create periods and take attendance to generate reports.
+                    </p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{{ url_for('new_period') }}" class="btn btn-primary">
+                            <i data-feather="plus"></i> Create Period
+                        </a>
+                        <a href="{{ url_for('attendance') }}" class="btn btn-outline-secondary">
+                            <i data-feather="camera"></i> Take Attendance
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center">
+                {% if teacher.profile_image_url %}
+                    <img src="{{ teacher.profile_image_url }}" alt="Profile" class="rounded-circle me-3" style="width: 64px; height: 64px; object-fit: cover;">
+                {% endif %}
+                <div>
+                    <h1 class="mb-1">Welcome back, {{ teacher.first_name or 'Teacher' }}!</h1>
+                    <p class="text-muted mb-0">Here's what's happening in your classes today.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <i data-feather="clock" class="me-3" style="width: 32px; height: 32px;"></i>
+                        <div>
+                            <h3 class="mb-0">{{ periods|length }}</h3>
+                            <p class="mb-0 opacity-75">Today's Periods</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <i data-feather="user-check" class="me-3" style="width: 32px; height: 32px;"></i>
+                        <div>
+                            {% set total_present = attendance_stats.values() | map(attribute='present') | sum %}
+                            <h3 class="mb-0">{{ total_present }}</h3>
+                            <p class="mb-0 opacity-75">Present Today</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <i data-feather="user-x" class="me-3" style="width: 32px; height: 32px;"></i>
+                        <div>
+                            {% set total_absent = attendance_stats.values() | map(attribute='absent') | sum %}
+                            <h3 class="mb-0">{{ total_absent }}</h3>
+                            <p class="mb-0 opacity-75">Absent Today</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <i data-feather="users" class="me-3" style="width: 32px; height: 32px;"></i>
+                        <div>
+                            {% set total_students = attendance_stats.values() | map(attribute='total') | sum %}
+                            <h3 class="mb-0">{{ total_students }}</h3>
+                            <p class="mb-0 opacity-75">Total Students</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Schedule -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i data-feather="calendar"></i> Today's Schedule
+                    </h5>
+                    <a href="{{ url_for('periods') }}" class="btn btn-sm btn-outline-primary">
+                        <i data-feather="plus"></i> Manage Periods
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if periods %}
+                        <div class="list-group list-group-flush">
+                            {% for period in periods %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ period.name }} - {{ period.subject }}</h6>
+                                        <p class="mb-1 text-muted">
+                                            <i data-feather="clock" style="width: 16px; height: 16px;"></i>
+                                            {{ period.start_time.strftime('%H:%M') }} - {{ period.end_time.strftime('%H:%M') }}
+                                        </p>
+                                        <small class="text-muted">Class: {{ period.class_name }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        {% set stats = attendance_stats.get(period.id, {'total': 0, 'present': 0, 'absent': 0}) %}
+                                        <div class="mb-2">
+                                            <span class="badge bg-success me-1">{{ stats.present }} Present</span>
+                                            <span class="badge bg-warning">{{ stats.absent }} Absent</span>
+                                        </div>
+                                        <a href="{{ url_for('take_attendance', period_id=period.id) }}" class="btn btn-sm btn-primary">
+                                            <i data-feather="camera"></i> Take Attendance
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i data-feather="calendar" class="text-muted mb-3" style="width: 48px; height: 48px;"></i>
+                            <h6 class="text-muted">No periods scheduled for today</h6>
+                            <p class="text-muted mb-3">Create your first period to get started.</p>
+                            <a href="{{ url_for('new_period') }}" class="btn btn-primary">
+                                <i data-feather="plus"></i> Create Period
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i data-feather="zap"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('attendance') }}" class="btn btn-primary">
+                            <i data-feather="camera"></i> Take Attendance
+                        </a>
+                        <a href="{{ url_for('reports') }}" class="btn btn-outline-primary">
+                            <i data-feather="bar-chart"></i> View Reports
+                        </a>
+                        <a href="/enhanced-features" class="btn btn-success">
+                            <i data-feather="zap"></i> Enhanced Features
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i data-feather="activity"></i> System Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i data-feather="check-circle" class="text-success me-2"></i>
+                        <span>Face Recognition System Online</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <i data-feather="database" class="text-success me-2"></i>
+                        <span>Database Connected</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i data-feather="camera" class="text-success me-2"></i>
+                        <span>Camera Access Ready</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="text-center">
+                        <small class="text-muted">
+                            Last updated: {{ moment().format('HH:mm') }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
